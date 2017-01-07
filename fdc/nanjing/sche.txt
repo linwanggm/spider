@@ -1,0 +1,6 @@
+#every month 1th, 8:00
+0     8       1         *     *  sh /home/wln/schm/month.sh
+#every data 11:00
+30     5       *        *     *  sh /home/wln/schm/day.sh
+
+
