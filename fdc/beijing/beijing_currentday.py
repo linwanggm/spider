@@ -3,7 +3,7 @@
 
 '''
 beijing_currentday.py
-nanjing house data
+beijing house data
 URL:http://www.bjjs.gov.cn/tabid/2207/Default.aspx
 1. qiFangWangQian (num, area, zhuzhai_num, zhuzhai_area)
 2. xianFangWangQian (num, area, zhuzhai_num, zhuzhai_area)
