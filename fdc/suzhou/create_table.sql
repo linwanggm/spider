@@ -1,0 +1,1 @@
+CREATE TABLE suzhou_currentdata(city name, time date, town name, day_total_num int, day_total_area float, day_zhuzhai_num int, day_zhuzhai_area float, keshou_zhuzhai_num int, keshou_feizhuzhai_num int, keshou_total_num int);
