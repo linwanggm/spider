@@ -3,8 +3,8 @@
 
 '''
 beijing_currentday.py
-beijing house data
-URL:http://www.bjjs.gov.cn/tabid/2207/Default.aspx
+nanjing house data
+URL:http://www.bjjs.gov.cn/bjjs/fwgl/fdcjy/index.shtml
 1. qiFangWangQian (num, area, zhuzhai_num, zhuzhai_area)
 2. xianFangWangQian (num, area, zhuzhai_num, zhuzhai_area)
 3. CunLiangFangWangQian (num, area, zhuzhai_num, zhuzhai_area)
@@ -28,23 +28,19 @@ def get_html_content(url):
     html = page.read()
     return html
 
-#get url file
-def down_file_content(url, filename):
-    urllib.urlretrieve(imgurl,'/home/wln/python/pic/%s.jpg' % x)
-
 '''
 get current data info: (time, rengou, chengjiao, xinfangshangshi)
 content like this:
 '''
 def get_current_data(content, url_2, fd):
 	current_data_list = []
-	reg = r'class="fontfamily">([\d\S]*)</span>'
+	aimstring = get_content_between_string('<div class="fdcsjtj_content">', '</html>', content)
+	reg = r'([^A-Za-z>][\d-]+)'
 	imgre = re.compile(reg)
-	itemlist = re.findall(imgre,content)
+	itemlist = re.findall(imgre,aimstring)
 	if len(itemlist) < 1:
 		logging.error('function get_current_data(), get aim string error')
 		return
-	now=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 	for itm in itemlist:
 		item = itm.split('(')[0]
 		current_data_list.append(item)
@@ -61,27 +57,41 @@ def get_current_data(content, url_2, fd):
 	string = string + current_data_list[-1]
 	#get the keshouqifang, weiqianyue, cunliangfang data
 	content = get_html_content(url_2)
-	keshouqifang_str='HouseTransactionStatist_totalCount" class="fontfamily">'
-	keshouqifang_zhuzhai_str = 'HouseTransactionStatist_residenceCount" class="fontfamily">'
-	weiqianyue_str = 'HouseTransactionStatist_totalCount5" class="fontfamily">'
-	weiqianyue_zhuzhai_str = 'HouseTransactionStatist_residenceCount5" class="fontfamily">'
-	cunliangfang_str = 'SignOnlineStatistics_totalCount" class="fontfamily">'
-	cunliangfang_zhuzhai_str = 'SignOnlineStatistics_residenceCount" class="fontfamily">'
-	spliteArray = [keshouqifang_str, keshouqifang_zhuzhai_str, weiqianyue_str, weiqianyue_zhuzhai_str, cunliangfang_str, cunliangfang_zhuzhai_str]	
-	
-	for item in spliteArray:
-		reg = item + '([\d]*)</span>'
-		imgre = re.compile(reg)
-		itemlist = re.findall(imgre,content)
-		if len(itemlist) < 1:
-			logging.error('function get_current_data(), ' + item)
-			string = string + ',0'
-		else:
-			string = string + ',' + str(itemlist[0])
+	aimstring = get_content_between_string("可售房屋套数", "</td></tr>", content)
+	reg = r'(?<=>)\d+'
+	imgre = re.compile(reg)
+	itemlist = re.findall(imgre,aimstring)
+	keshouqifang_total = itemlist[-1]
+	aimstring = get_content_between_string("住宅套数", "</td></tr>", content)
+	reg = r'(?<=>)\d+'
+	imgre = re.compile(reg)
+	itemlist_zhuzhai = re.findall(imgre,aimstring)
+	keshouqifang_zhuzhai = itemlist_zhuzhai[0]
+	string = string + ',' + keshouqifang_total + ',' + keshouqifang_zhuzhai
+	#weiqianyue
+	aimstring = get_content_between_string("未签约套数", "</td></tr>", content)
+	reg = r'(?<=>)\d+'
+	imgre = re.compile(reg)
+	itemlist = re.findall(imgre,aimstring)
+	weiqianyue_total = itemlist[-1]	
+	weiqianyue_zhuzhai = itemlist_zhuzhai[4]
+	string = string + ',' + weiqianyue_total + ',' + weiqianyue_zhuzhai
+	#cunliangfang
+	aimstring = get_content_between_string("可售房源套数", "</tr>", content)
+	reg = r'\s\d+'
+	imgre = re.compile(reg)
+	itemlist = re.findall(imgre,aimstring)
+	cunliangfang_total = itemlist[-1]	
+	aimstring = get_content_between_string("可售住宅套数", "</tr>", content)
+	reg = r'\s\d+'
+	imgre = re.compile(reg)
+	itemlist = re.findall(imgre,aimstring)
+	cunliangfang_zhuzhai = itemlist[-1]	
+	string = string + ',' + cunliangfang_total + ',' + cunliangfang_zhuzhai
 	fd.write(string+'\n')
 
-url = "http://www.bjjs.gov.cn/tabid/2207/Default.aspx"
-url_2 = "http://www.bjjs.gov.cn/tabid/2167/default.aspx"
+url = "http://www.bjjs.gov.cn/bjjs/fwgl/fdcjy/index.shtml"
+url_2 = "http://www.bjjs.gov.cn/bjjs/fwgl/fdcjy/fwjy/index.shtml"
 
 def main():
 	current_path = os.getcwd()
@@ -102,6 +112,20 @@ def main():
 	content = get_html_content(url)
 	get_current_data(content, url_2, fd)	
 	fd.close()
+
+def get_content_between_string(str1, str2, content):
+	contentArray = content.split('\n')
+	returnStr = ''
+	begin = False
+	for item in contentArray:
+		if str1 in item:
+			begin = True
+		if begin == True and str2 in item:
+			returnStr = returnStr + str(item) + '\n'
+			begin = False
+		if begin == True:
+			returnStr = returnStr + str(item) + '\n'
+	return returnStr
 
 if __name__=='__main__':
 	main()
